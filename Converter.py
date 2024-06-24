@@ -289,7 +289,7 @@ def main():
     
     final_product = title + '\n' + markdown_file #merge the generated title with the process front-free file
     
-    with open('markdown.txt', 'w') as final_file:
+    with open('markdown.txt', 'w', encoding='utf-8') as final_file:
         final_file.write(final_product)
 
 
