@@ -15,7 +15,6 @@ import pandas as pd
 
 # In[2]:
 
-
 #regexes:
 p_fn = r'\[fn:fn(\d+)\]' #footnote in running text
 p_tbl = r'\[tbl: tb(\d+)\]' #table
@@ -57,7 +56,7 @@ def split_title_from_body(xml):
 
 def strip_ext_link_tags(text):
     # Define a regular expression pattern to match <ext-link> tags and their content
-    pattern = r'<ext-link.*?href="(.*?)".*?>(.*?)</ext-link>'
+    pattern = r'<ext-link.*?href="(.*?)".*?>(.*?)</ext-link>|<ext-link.*?xlink:href="(.*?)".*?>(.*?)</ext-link>'
     
     # Use re.sub() to replace the matched text with the link text
     processed_text = re.sub(pattern, r'\2', text)
@@ -133,6 +132,15 @@ tag_dict = {
     'p': ''
 }
 
+def format_citation(input_string):
+    # Define a regular expression pattern to match the <ext-link> tags and extract the DOI link
+    pattern = r'<ext-link\s+ext-link-type="doi"\s+{http://www\.w3\.org/1999/xlink}href=".*">(.*)</ext-link'
+    
+    # Use re.sub to replace the matched pattern with the DOI link itself
+    formatted_string = re.sub(pattern, r'\1', input_string)
+    
+    return formatted_string
+
 def format_footnote(raw_footnote, tag_dict):
     #this function searches for xml tags in the raw footnote and replaces the tags with relevant markdown elements
     #based on a dict
@@ -148,6 +156,8 @@ def format_footnote(raw_footnote, tag_dict):
     #strip the ext-link tags from the text
     raw_footnote = strip_ext_link_tags(raw_footnote)
     
+    raw_footnote = format_citation(raw_footnote)
+    #print(raw_footnote)
     #look for https links and activate them
     raw_footnote = activate_urls(raw_footnote)
     
@@ -236,6 +246,65 @@ def add_fn(txt, basexml):
         txt = txt.replace(tobereplaced, replacement)
     return txt
 
+def compose_ref_dict(text):
+    # Define the regex pattern
+    pattern = re.compile(r'\[(r\d+):([^\]]+)\]')
+    
+    # Find all matches in the text
+    matches = pattern.findall(text)
+    
+    # Create the resulting dictionary
+    result = {}
+    for match in matches:
+        entire_match = f'[{match[0]}:{match[1]}]'
+        group1 = match[0]
+        group2 = match[1]
+        formatted_string = f'<a href="#_ftn{group1}" name="_ftnref{group1}">[{group2}]</a>'
+        result[entire_match] = formatted_string
+    
+    return result
+
+def add_ref(txt):
+    ref_dict = compose_ref_dict(txt)
+    
+    for ref in ref_dict.keys():
+        txt = txt.replace(ref, ref_dict[ref])
+        
+    return txt
+
+def extract_ref_contents(xml_file):
+    # Initialize an empty dictionary to store the extracted content
+    ref_dict = {}
+
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all <ref> elements within the <ref-list>
+    for ref in root.findall('.//ref-list/ref'):
+        ref_id = ref.get('id')  # Get the ref id
+        ref_content = get_text_recursively(ref.find('mixed-citation'))  # Get the ref content
+        
+        # Store the content in the dictionary using the ref id as the key
+        ref_dict[ref_id] = ref_content
+
+    return ref_dict
+
+def add_references_bottom(txt, basexml):
+    reference_list = extract_ref_contents(basexml)
+    
+    for ref in reference_list.keys():
+        ref_no = ref
+        ref_text = reference_list[ref]
+        ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
+        ref_text = format_footnote(ref_text, tag_dict)
+        ref_formula = "<a href=\"#_ftnref"+ ref_no +'" name="_ftn' + ref_no + '">[' + ref_no +'] </a>' + ref_text
+        
+        txt += '\n'
+        txt += '\n'
+        txt += ref_formula
+        
+    return txt
 
 # In[12]:
 
@@ -271,6 +340,7 @@ def activate_ext_links(text):
 
 
 def main():
+    tijdschrift = None
     try:
         input_file = sys.argv[1]
         style_file = sys.argv[2]
@@ -278,16 +348,36 @@ def main():
     except IndexError:
         print('Please input all the necessary command line variables')
     
-    
-    file_without_front = split_title_from_body(input_file) #split the front, so we can add the title info in the replace_title function
-    markdown_file = apply_xslt(file_without_front, style_file)
+    try:
+        tijdschrift = sys.argv[3]
+        print(f'using specific parameters for journal {tijdschrift}')
+
+    except IndexError:
+        pass
+
+
+    if tijdschrift == 'BMGN':
+        file_without_front = split_title_from_body(input_file) #split the front, so we can add the title info in the replace_title function
+        markdown_file = apply_xslt(file_without_front, style_file)
         
         #replace tables here
-    markdown_file = add_footnotes_bottom(markdown_file, input_file)
-    markdown_file = add_fn(markdown_file, input_file)
-    title = gen_title_bmgn(input_file) #create a title from the XML
+        markdown_file = add_footnotes_bottom(markdown_file, input_file)
+        markdown_file = add_fn(markdown_file, input_file)
+        title = gen_title_bmgn(input_file) #create a title from the XML
+        final_product = title + '\n' + markdown_file #merge the generated title with the process front-free file
     
-    final_product = title + '\n' + markdown_file #merge the generated title with the process front-free file
+    else:
+        tree = ET.parse(input_file)
+        tree = tree.getroot()
+        
+        input_string = ET.tostring(tree)
+
+        markdown_file = apply_xslt(input_string, style_file)
+        
+        #replace tables here
+        markdown_file = add_references_bottom(markdown_file, input_file)
+        markdown_file = add_ref(markdown_file)
+        final_product = markdown_file #merge the generated title with the process front-free file
     
     with open('markdown.txt', 'w', encoding='utf-8') as final_file:
         final_file.write(final_product)
