@@ -293,6 +293,9 @@ def extract_ref_contents(xml_file):
 def add_references_bottom(txt, basexml):
     reference_list = extract_ref_contents(basexml)
     
+    txt += '\n'
+    txt += '### References \n'
+
     for ref in reference_list.keys():
         ref_no = ref
         ref_text = reference_list[ref]
