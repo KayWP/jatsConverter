@@ -88,31 +88,44 @@ def capitalize_sc_tags(text):
 
 
 def find_article_metadata_bmgn(xml):
-    #this function is specific to the BMGN structure. Not sure how well it will work for other journals
     xml_tree = etree.parse(xml)
-    article_title = xml_tree.find('//article-title')
-    article_subtitle = xml_tree.find('//subtitle')
+    
+    # Find the article title and subtitle
+    article_title_element = xml_tree.find('//article-title')
+    article_subtitle_element = xml_tree.find('//subtitle')
+    
+    # Get text if elements are found, otherwise set to None
+    article_title = article_title_element.text if article_title_element is not None else None
+    article_subtitle = article_subtitle_element.text if article_subtitle_element is not None else None
+    
+    # Find the author names
     author_names = []
     for contrib in xml_tree.xpath('//contrib[@contrib-type="author"]'):
         surname = contrib.find('.//surname').text
         given_names = contrib.find('.//given-names').text
         full_name = f"{given_names} {surname}"
         author_names.append(full_name)
-        
-    doi_element = xml_tree.find('.//article-id[@pub-id-type="doi"]')
     
-    return article_title.text, article_subtitle.text, author_names, doi_element.text
-
-
-# In[8]:
-
+    # Find the DOI element
+    doi_element = xml_tree.find('.//article-id[@pub-id-type="doi"]')
+    doi = doi_element.text if doi_element is not None else None
+    
+    return article_title, article_subtitle, author_names, doi
 
 def gen_title_bmgn(xml):
     title_info = find_article_metadata_bmgn(xml)
-    title = f"# {title_info[0]} \n## {title_info[1]} \n[{title_info[3]}]({title_info[3]})\n\n"
+    
+    # Handle potential None values in the title and subtitle
+    title = f"# {title_info[0] if title_info[0] else 'No Title'}\n"
+    subtitle = f"## {title_info[1]}" if title_info[1] else ""
+    doi = f"[{title_info[3]}]({title_info[3]})\n\n" if title_info[3] else ""
+    
+    full_title = f"{title}{subtitle}\n{doi}"
+    
     for author in title_info[2]:
-        title = title + f"{author}\n"
-    return title
+        full_title += f"{author}\n"
+    
+    return full_title
 
 
 # In[18]:
