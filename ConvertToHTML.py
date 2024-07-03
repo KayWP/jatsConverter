@@ -12,6 +12,37 @@ import sys
 import Converter
 
 
+# In[9]:
+
+
+def construct_html_file(html_open, html_close, converted_article_text, xml):
+    
+    title = Converter.find_article_metadata_bmgn(xml)[0]
+    
+    file_name = title + '.html'
+    
+    with open(html_open, 'r', encoding='utf-8') as file:
+        html_start = ''
+        line = file.readline()
+
+        while line:
+            html_start += line
+            line = file.readline()
+            
+    with open(html_close, 'r', encoding='utf-8') as file:
+        html_end = ''
+        line = file.readline()
+
+        while line:
+            html_end += line
+            line = file.readline() 
+            
+    output = html_start + '\n' + converted_article_text + '\n' + html_end
+    
+    with open(file_name, 'w', encoding='utf-8') as file:
+        file.write(output)    
+
+
 # In[8]:
 
 
@@ -44,7 +75,7 @@ def main():
     
     file_without_front = Converter.split_title_from_body(input_file) #split the front, so we can add the title info in the replace_title function
     markdown_file = Converter.apply_xslt(file_without_front, style_file)
-    title = Converter.gen_title_bmgn(input_file) #create a title from the XML
+    title = Converter.gen_title_html(input_file) #create a title from the XML
     
     if reference_style == 'a':
         if Converter.contains_tag(input_file, 'xref', 'bibr'):
@@ -56,18 +87,20 @@ def main():
             print('detected fn')
         
     if reference_style == 'fn':
-        markdown_file = Converter.add_footnotes_bottom(markdown_file, input_file)
+        markdown_file = Converter.add_footnotes_bottom_html(markdown_file, input_file)
         markdown_file = Converter.add_fn(markdown_file, input_file)
         
     elif reference_style == 'ref':       
         #replace tables here
-        markdown_file = Converter.add_references_bottom(markdown_file, input_file)
+        markdown_file = Converter.add_references_bottom_html(markdown_file, input_file)
         markdown_file = Converter.add_ref(markdown_file)
         
     final_product = title + '\n' + markdown_file #merge the generated title with the process front-free file
     
-    with open('html.txt', 'w', encoding='utf-8') as final_file:
-        final_file.write(final_product)
+    #with open('html.txt', 'w', encoding='utf-8') as final_file:
+    #    final_file.write(final_product)
+    
+    construct_html_file('html_open.html', 'html_close.html', final_product, input_file)
 
 
 # In[3]:

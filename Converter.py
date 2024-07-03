@@ -127,6 +127,23 @@ def gen_title_bmgn(xml):
     
     return full_title
 
+def gen_title_html(xml):
+    title_info = find_article_metadata_bmgn(xml)
+    
+    # Handle potential None values in the title and subtitle
+    title = f"<h1>{title_info[0] if title_info[0] else 'No Title'}</h1>"
+    subtitle = f"<h2>{title_info[1]}</h2>" if title_info[1] else ""
+    doi = f'<a href="{title_info[3]}">{title_info[3]}</a><br><br>' if title_info[3] else ""
+    
+    full_title = f"{title}{subtitle}<br>{doi}"
+    
+    for author in title_info[2]:
+        full_title += f"{author}<br>"
+
+    full_title += '<br>'
+    
+    return full_title
+
 
 # In[18]:
 
@@ -145,6 +162,25 @@ tag_dict = {
     'p': ''
 }
 
+closing_tag_dict = {
+    'italic': '_',
+    'bold': '**',
+    'p': ''
+}
+
+opening_tag_dict_html = {
+    'italic': '<em>',
+    'bold': '<strong>',
+    'p': '<p>'
+}
+
+closing_tag_dict_html = {
+    'italic': '</em>',
+    'bold': '</strong>',
+    'p': '</p>'
+}
+
+
 def format_citation(input_string):
     # Define a regular expression pattern to match the <ext-link> tags and extract the DOI link
     pattern = r'<ext-link\s+ext-link-type="doi"\s+{http://www\.w3\.org/1999/xlink}href=".*">(.*)</ext-link'
@@ -154,27 +190,28 @@ def format_citation(input_string):
     
     return formatted_string
 
-def format_footnote(raw_footnote, tag_dict):
-    #this function searches for xml tags in the raw footnote and replaces the tags with relevant markdown elements
-    #based on a dict
-    for tag in tag_dict.keys():
-        open_tag = '<'+tag+'>'
-        close_tag = '</'+tag+'>'
-        raw_footnote = raw_footnote.replace(open_tag, tag_dict[tag])
-        raw_footnote = raw_footnote.replace(close_tag, tag_dict[tag])
+def format_footnote(raw_footnote, opening_tag_dict, closing_tag_dict):
+    # Replace XML tags with HTML tags based on dictionaries
+    for tag in opening_tag_dict:
+        open_tag = '<' + tag + '>'
+        close_tag = '</' + tag + '>'
+        raw_footnote = raw_footnote.replace(open_tag, opening_tag_dict[tag])
+        raw_footnote = raw_footnote.replace(close_tag, closing_tag_dict[tag])
     
-    #make all of the sc tags into capitals
+    # Capitalize content within <sc> tags
     raw_footnote = capitalize_sc_tags(raw_footnote)
     
-    #strip the ext-link tags from the text
+    # Strip <ext-link> tags from the text
     raw_footnote = strip_ext_link_tags(raw_footnote)
     
+    # Format citations if needed (assuming this function exists)
     raw_footnote = format_citation(raw_footnote)
-    #print(raw_footnote)
-    #look for https links and activate them
+    
+    # Activate URLs
     raw_footnote = activate_urls(raw_footnote)
     
     return raw_footnote
+
 
 
 # In[11]:
@@ -246,6 +283,10 @@ def add_footnotes_bottom(txt, basexml):
     #this function constructs the text of the footnotes at the bottom of the page and adds them, one by one
     
     footnote_list = extract_fn_contents(basexml)
+    
+    txt += '\n'
+    txt += '### Footnotes \n'
+    
     for fn in footnote_list.keys():
         fnno = fn
         fntxt = footnote_list[fn]
@@ -253,6 +294,23 @@ def add_footnotes_bottom(txt, basexml):
         fnformula = "<a href=\"#_ftnref"+ fnno +'" name="_ftn' + fnno + '">[' + fnno +'] </a>' + fntxt
         txt += '\n'
         txt += '\n'
+        txt += fnformula
+    return txt
+
+def add_footnotes_bottom_html(txt, basexml):
+    #this function constructs the text of the footnotes at the bottom of the page and adds them, one by one
+    
+    txt += '<br>'
+    txt += '<h3>Footnotes</h3>'
+
+    footnote_list = extract_fn_contents(basexml)
+    for fn in footnote_list.keys():
+        fnno = fn
+        fntxt = footnote_list[fn]
+        fntxt = format_footnote(fntxt, opening_tag_dict_html, closing_tag_dict_html)
+        fnformula = "<a href=\"#_ftnref"+ fnno +'" name="_ftn' + fnno + '">[' + fnno +'] </a>' + fntxt
+        txt += '<br>'
+        txt += '<br>'
         txt += fnformula
     return txt
 
@@ -326,11 +384,30 @@ def add_references_bottom(txt, basexml):
         ref_no = ref
         ref_text = reference_list[ref]
         ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
-        ref_text = format_footnote(ref_text, tag_dict)
+        ref_text = format_footnote(ref_text, opening_tag_dict_html, closing_tag_dict_html)
         ref_formula = "<a href=\"#_ftnref"+ ref_no +'" name="_ftn' + ref_no + '">[' + ref_no +'] </a>' + ref_text
         
         txt += '\n'
         txt += '\n'
+        txt += ref_formula
+        
+    return txt
+
+def add_references_bottom_html(txt, basexml):
+    reference_list = extract_ref_contents(basexml)
+    
+    txt += '<br>'
+    txt += '<h3>Footnotes</h3>'
+
+    for ref in reference_list.keys():
+        ref_no = ref
+        ref_text = reference_list[ref]
+        ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
+        ref_text = format_footnote(ref_text, tag_dict)
+        ref_formula = "<a href=\"#_ftnref"+ ref_no +'" name="_ftn' + ref_no + '">[' + ref_no +'] </a>' + ref_text
+        
+        txt += '<br>'
+        txt += '<br>'
         txt += ref_formula
         
     return txt

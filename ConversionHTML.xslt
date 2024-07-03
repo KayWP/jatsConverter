@@ -63,10 +63,12 @@
     <xsl:apply-templates/>
   </xsl:template>
 
-  <!-- Transform <title> elements into HTML headers -->
+  <!-- Transform <title> elements into HTML headers with a <br> element before them -->
   <xsl:template match="title">
+    <br/>
     <h3><xsl:apply-templates/></h3>
   </xsl:template>
+
 
   <!-- Transform paragraphs -->
   <xsl:template match="p">
