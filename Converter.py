@@ -19,6 +19,7 @@ import pandas as pd
 p_fn = r'\[fn:fn(\d+)\]' #footnote in running text
 p_tbl = r'\[tbl: tb(\d+)\]' #table
 p_cptn = r'(?s)\*\_(.*?)\_\*' #caption for figures
+p_ext = r'<ext-link ext-link-type="(.+?)" xlink:href="(.+?)">(.+?)<\/ext-link>|<ext-link ext-link-type="(.+?)" href="(.+?)">(.+?)<\/ext-link>'
 p_url = r'https?:\/\/[^\s()]+'
 
 
@@ -54,14 +55,17 @@ def split_title_from_body(xml):
 # In[5]:
 
 
+import re
+
 def strip_ext_link_tags(text):
     # Define a regular expression pattern to match <ext-link> tags and their content
-    pattern = r'<ext-link.*?href="(.*?)".*?>(.*?)</ext-link>|<ext-link.*?xlink:href="(.*?)".*?>(.*?)</ext-link>'
+    pattern = r'{.+?}'
     
-    # Use re.sub() to replace the matched text with the link text
-    processed_text = re.sub(pattern, r'\2', text)
+    # Use re.sub() to replace the matched text with an empty string
+    processed_text = re.sub(pattern, '', text)
     
     return processed_text
+
 
 
 # In[6]:
@@ -272,15 +276,22 @@ def format_footnote(raw_footnote, opening_tag_dict, closing_tag_dict):
     
     # Capitalize content within <sc> tags
     raw_footnote = capitalize_sc_tags(raw_footnote)
-    
-    # Strip <ext-link> tags from the text
+
     raw_footnote = strip_ext_link_tags(raw_footnote)
+
+    print(raw_footnote)
+
+    raw_footnote = activate_ext_links(raw_footnote)
+
+    print(raw_footnote)
+    # Strip <ext-link> tags from the text
+    
     
     # Format citations if needed (assuming this function exists)
     raw_footnote = format_citation(raw_footnote)
     
     # Activate URLs
-    raw_footnote = activate_urls(raw_footnote)
+    
     
     return raw_footnote
 
@@ -497,19 +508,16 @@ def activate_urls(text):
     return formatted_text
 
 def activate_ext_links(text):
-    # Regular expression pattern to match <ext-link> tags with href attribute
-    
-    p_ext_link = r'<ext-link.*?href="(.*?)".*?>(.*?)<\/ext-link>'
-    
-    # Find all <ext-link> tags with href attribute and extract URLs and link text
-    urls = re.findall(p_ext_link, text)
-    
-    # Process each URL and replace it with HTML link markup
+    urls = re.finditer(p_ext, text)
     formatted_text = text
-    for url, link_text in urls:
-        markdown_link = f'<a href="{url}" target="blank">{link_text}</a>'
-        formatted_text = formatted_text.replace(f'<ext-link.*?href="{url}">{link_text}</ext-link>', markdown_link)
-    
+    for url in urls:
+        to_be_replaced = url.group(0)
+        url_address = url.group(2)
+        url_text = url.group(3)
+        if url_address:
+            url_address = url_address.strip('.')
+            markdown_link = f'<a href={url_address} target="blank">{url_text}</a>'
+            formatted_text = formatted_text.replace(to_be_replaced, markdown_link)
     return formatted_text
 
 
