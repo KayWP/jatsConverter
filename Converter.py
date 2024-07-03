@@ -229,6 +229,19 @@ def extract_fn_contents(xml_file):
 
     return fn_dict
 
+def contains_tag(xml_file, tag, ref_type):
+    try:
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+        # Iterate over all elements with the specified tag
+        for elem in root.iter(tag):
+            # Check if the element has the attribute 'ref-type' with the desired value
+            if elem.get('ref-type') == ref_type:
+                return True
+        return False
+    except ET.ParseError:
+        return False
+
 def add_footnotes_bottom(txt, basexml):
     #this function constructs the text of the footnotes at the bottom of the page and adds them, one by one
     
@@ -402,5 +415,6 @@ def main():
 # In[15]:
 
 
-main()
+if __name__ == '__main__':
+    main()
 
