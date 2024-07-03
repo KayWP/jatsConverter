@@ -89,9 +89,9 @@
 
   <!-- Transform tables -->
   <xsl:template match="table-wrap">
-    <table id="{@id}">
-      <xsl:apply-templates/>
-    </table>
+    <xsl:text>[table wrap </xsl:text>
+    <xsl:value-of select="@id"/>
+    <xsl:text>]</xsl:text>
   </xsl:template>
 
   <!-- Transform the <sc> tag (capitalize its contents) -->

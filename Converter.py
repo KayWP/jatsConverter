@@ -147,10 +147,82 @@ def gen_title_html(xml):
 
 # In[18]:
 
+def extract_tables(xml_file):
+    # Initialize an empty dictionary to store the extracted content
+    table_dict = {}
 
-def table_convert(html_table):
-    df = pd.read_html(html_table)
-    return df[0].to_markdown()
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all <table-wrap> elements
+    table_wraps = root.findall('.//table-wrap')
+
+    # Iterate over each <table-wrap> element
+    for table_wrap in table_wraps:
+        # Extract the id attribute
+        table_id = table_wrap.get('id')
+
+        # Store the entire <table-wrap> element as the value in the dictionary
+        table_dict[table_id] = table_wrap
+
+    return table_dict
+
+def add_tables(txt, basexml):
+    #this function replaces the placeholders in the text, added by the xslt, with actual active links referring to the
+    #ftnref added in previously by add_footnotes_bottom
+    
+    table_dict = extract_tables(basexml)
+
+    for table in table_dict.keys():
+        #print(table)
+        replacement = convert_table_to_html(table_dict[table], table_id=table)
+        #print()
+        #print(replacement)
+        tobereplaced = '[table wrap ' + table + ']'
+        #print(tobereplaced)
+        txt = txt.replace(tobereplaced, replacement)
+    return txt
+
+import xml.etree.ElementTree as ET
+
+def convert_table_to_html(xml_element, table_id='tb001'):
+    # Assuming xml_element is already an ElementTree.Element object
+    
+    # Extract table elements
+    label = xml_element.find('label').text.strip()
+    caption = xml_element.find('.//caption').find('p').text.strip()
+    thead_rows = xml_element.find('.//thead').findall('tr')
+    tbody_rows = xml_element.find('.//tbody').findall('tr')
+
+    # Start constructing HTML output
+    html_output = f'''
+    <table id="{table_id}" style="float: center;">
+      <caption>{label} {caption}</caption>
+      <thead>
+    '''
+
+    # Add thead rows to HTML output
+    html_output += '    <tr>\n'
+    for th in thead_rows[0].findall('th'):
+        html_output += f'      <th>{th.text.strip()}</th>\n'
+    html_output += '    </tr>\n'
+
+    # Add tbody rows to HTML output
+    html_output += '  </thead>\n  <tbody>\n'
+    for tr in tbody_rows:
+        html_output += '    <tr>\n'
+        for td in tr.findall('td'):
+            html_output += f'      <td>{td.text.strip()}</td>\n'
+        html_output += '    </tr>\n'
+
+    # Complete the HTML output
+    html_output += '''
+      </tbody>
+    </table>
+    '''
+
+    return html_output
 
 
 # In[9]:
