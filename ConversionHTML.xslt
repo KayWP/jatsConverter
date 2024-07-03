@@ -80,12 +80,24 @@
     <a href="{@xlink:href}"><xsl:apply-templates/></a>
   </xsl:template>
 
-  <!-- Transform figures -->
+    <!-- Transform figures -->
   <xsl:template match="fig">
     <figure>
       <img src="{graphic/@xlink:href}" alt="Figure"/>
+      <figcaption>
+        <xsl:apply-templates select="caption"/>
+      </figcaption>
     </figure>
   </xsl:template>
+
+  <!-- Template to match caption elements -->
+  <xsl:template match="caption">
+    <em>
+      <xsl:apply-templates/>
+    </em>
+  </xsl:template>
+
+
 
   <!-- Transform tables -->
   <xsl:template match="table-wrap">

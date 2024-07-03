@@ -37,55 +37,12 @@ def construct_html_file(html_open, html_close, converted_article_text, xml):
             html_end += line
             line = file.readline() 
     
-    html_start.replace('[Hier moet de titel, deze tekst zou uniek moeten zijn, 030]', title)
+    html_start = html_start.replace('[Hier moet de titel, deze tekst zou uniek moeten zijn, 030]', title)
     
     output = html_start + '\n' + converted_article_text + '\n' + html_end
     
     with open(file_name, 'w', encoding='utf-8') as file:
         file.write(output)    
-
-
-# In[16]:
-
-
-def convert_table_to_html(xml_string, table_id='tb001'):
-    # Parse the XML
-    root = ET.fromstring(xml_string)
-    
-    # Extract table elements
-    label = root.find('label').text.strip()
-    caption = root.find('.//caption').find('p').text.strip()
-    thead_rows = root.find('.//thead').findall('tr')
-    tbody_rows = root.find('.//tbody').findall('tr')
-
-    # Start constructing HTML output
-    html_output = f'''
-    <table id="{table_id}" style="float: center;">
-      <caption>{label} {caption}</caption>
-      <thead>
-    '''
-
-    # Add thead rows to HTML output
-    html_output += '    <tr>\n'
-    for th in thead_rows[0].findall('th'):
-        html_output += f'      <th>{th.text.strip()}</th>\n'
-    html_output += '    </tr>\n'
-
-    # Add tbody rows to HTML output
-    html_output += '  </thead>\n  <tbody>\n'
-    for tr in tbody_rows:
-        html_output += '    <tr>\n'
-        for td in tr.findall('td'):
-            html_output += f'      <td>{td.text.strip()}</td>\n'
-        html_output += '    </tr>\n'
-
-    # Complete the HTML output
-    html_output += '''
-      </tbody>
-    </table>
-    '''
-
-    return html_output
 
 
 # In[8]:
