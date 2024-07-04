@@ -191,6 +191,19 @@
     <xsl:text>]</xsl:text>
   </xsl:template>
 
+  <!-- Transform bibliography references -->
+  <xsl:template match="xref[@ref-type='bibr']">
+    <xsl:text>[</xsl:text>
+    <xsl:value-of select="@rid"/>
+    <xsl:text>:</xsl:text>
+    <xsl:value-of select="."/>
+    <xsl:text>]</xsl:text>
+  </xsl:template>
+
+  <xsl:template match="ext-link[@ext-link-type='doi']">
+    <xsl:value-of select="."/>
+  </xsl:template>
+
   <!-- New Rule: Transform <ext-link> tags into Markdown URLs -->
   <xsl:template match="ext-link">
     <xsl:text>[</xsl:text>
