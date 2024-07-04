@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[5]:
 
 
 import re
@@ -63,7 +63,7 @@ def main():
 
     if len(sys.argv) > 3:
         reference_style = sys.argv[3]
-        if reference_style == 'ref' or reference_style == 'fn':
+        if reference_style == 'ref' or reference_style == 'fn' or reference_style == 'jhok':
             print(f'Using specific reference style {reference_style}')
         else:
             print(f'{reference_style} is not a supported value, using automatic instead')
@@ -84,12 +84,14 @@ def main():
     
     if reference_style == 'jhok':
         print('preprocessing file')
-        Convertor.JHOK_preprocess(input_file)
+        Converter.JHOK_preprocess(input_file)
+        original_file = input_file
         input_file = 'output.xml'
 
         markdown_file = Converter.add_footnotes_bottom_html(markdown_file, input_file)
         markdown_file = Converter.add_fn(markdown_file, input_file)
-        markdown_file = Converter.add_references_bottom_html(markdown_file, input_file)
+        
+        markdown_file = Converter.add_references_without_link(markdown_file, original_file)
         
     
     if reference_style == 'a':
@@ -128,10 +130,32 @@ if __name__ == '__main__':
     main()
 
 
-# In[ ]:
+# In[8]:
 
 
+def extract_ref_contents(xml_file):
+    # Initialize an empty dictionary to store the extracted content
+    ref_dict = {}
 
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all <ref> elements within the <ref-list>
+    for ref in root.findall('.//ref-list/ref'):
+        ref_id = ref.get('id')  # Get the ref id
+        ref_content = Converter.get_text_recursively(ref.find('mixed-citation'))  # Get the ref content
+        
+        # Store the content in the dictionary using the ref id as the key
+        ref_dict[ref_id] = ref_content
+
+    return ref_dict
+
+
+# In[9]:
+
+
+extract_ref_contents('output.xml')
 
 
 # In[ ]:

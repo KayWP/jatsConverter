@@ -411,7 +411,6 @@ def add_footnotes_bottom_html(txt, basexml):
         fntxt = format_footnote(fntxt, opening_tag_dict_html, closing_tag_dict_html)
         fnformula = "<a href=\"#_ftnref"+ fnno +'" name="_ftn' + fnno + '">[' + fnno +'] </a>' + fntxt
         txt += '<br>'
-        txt += '<br>'
         txt += fnformula
     return txt
 
@@ -496,6 +495,9 @@ def add_references_bottom(txt, basexml):
 
 def add_references_bottom_html(txt, basexml):
     reference_list = extract_ref_contents(basexml)
+    for r in reference_list.keys():
+        print(r)
+    #print('found references:')
     
     txt += '<br>'
     txt += '<h3>Footnotes</h3>'
@@ -505,12 +507,38 @@ def add_references_bottom_html(txt, basexml):
         ref_text = reference_list[ref]
         ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
         ref_text = format_footnote(ref_text, opening_tag_dict_html, closing_tag_dict_html)
+        #print(ref_text)
         ref_formula = "<a href=\"#_ftnref"+ ref_no +'" name="_ftn' + ref_no + '">[' + ref_no +'] </a>' + ref_text
         
         txt += '<br>'
-        txt += '<br>'
         txt += ref_formula
         
+    return txt
+
+def reference_cleanup(txt):
+    cleanup_list = ['other', 'book', 'journal', 'confproc']
+    for t in cleanup_list:
+        t_str = 'publication-type="' + t + '">'
+        txt = txt.replace(t_str, '')
+
+    return txt
+
+def add_references_without_link(txt, basexml):
+    reference_list = extract_ref_contents(basexml)
+
+    txt += '<br>'
+    txt += '<h3>References</h3>'
+    
+
+    for ref in reference_list.keys():
+        ref_text = reference_list[ref]
+        ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
+        ref_text = reference_cleanup(ref_text)
+        ref_text = format_footnote(ref_text, opening_tag_dict_html, closing_tag_dict_html)
+        
+        txt += '<br>'
+        txt += ref_text
+
     return txt
 
 # In[12]:
