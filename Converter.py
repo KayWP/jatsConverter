@@ -21,6 +21,7 @@ p_tbl = r'\[tbl: tb(\d+)\]' #table
 p_cptn = r'(?s)\*\_(.*?)\_\*' #caption for figures
 p_ext = r'<ext-link ext-link-type="(.+?)" xlink:href="(.+?)">(.+?)<\/ext-link>|<ext-link ext-link-type="(.+?)" href="(.+?)">(.+?)<\/ext-link>'
 p_url = r'https?:\/\/[^\s()]+'
+p_jhok_fn = r'<fn [\s\S]*?<\/fn>'
 
 
 # In[3]:
@@ -279,11 +280,11 @@ def format_footnote(raw_footnote, opening_tag_dict, closing_tag_dict):
 
     raw_footnote = strip_ext_link_tags(raw_footnote)
 
-    print(raw_footnote)
+    #print(raw_footnote)
 
     raw_footnote = activate_ext_links(raw_footnote)
 
-    print(raw_footnote)
+    #print(raw_footnote)
     # Strip <ext-link> tags from the text
     
     
@@ -330,6 +331,14 @@ def get_text_recursively(element):
             text += element.tail
     return text
 
+def extract_fn_elements(xml_string):   
+    # List to store the contents of <fn> tags
+    fn_list = re.findall(xml_string, p_jhok_fn)
+
+    return fn_list
+
+import xml.etree.ElementTree as ET
+
 def extract_fn_contents(xml_file):
     # Initialize an empty dictionary to store the extracted content
     fn_dict = {}
@@ -348,6 +357,7 @@ def extract_fn_contents(xml_file):
         fn_dict[fn_label] = fn_content
 
     return fn_dict
+
 
 def contains_ref_type(xml_file, tag, ref_type):
     try:
@@ -494,7 +504,7 @@ def add_references_bottom_html(txt, basexml):
         ref_no = ref
         ref_text = reference_list[ref]
         ref_text = ref_text.strip('<mixed-citation>').strip('</mixed-citation>')
-        ref_text = format_footnote(ref_text, tag_dict)
+        ref_text = format_footnote(ref_text, opening_tag_dict_html, closing_tag_dict_html)
         ref_formula = "<a href=\"#_ftnref"+ ref_no +'" name="_ftn' + ref_no + '">[' + ref_no +'] </a>' + ref_text
         
         txt += '<br>'
@@ -575,6 +585,62 @@ def main():
     
     with open('markdown.txt', 'w', encoding='utf-8') as final_file:
         final_file.write(final_product)
+
+def JHOK_preprocess(xml):
+    text = restructure_JHOK_footnotes(xml)
+    
+    with open('output.xml', 'w', encoding='utf-8') as file:
+        file.write(text)   
+
+def extract_fn(xml_file):
+    # Initialize an empty dictionary to store the extracted content
+    fn_list = []
+
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Find all <fn> elements within the <fn-group>
+    for fn in root.findall('.//fn'):
+        fn_element = ET.tostring(fn, encoding='unicode')  # Convert <fn> element to string
+        
+        # Store the entire <fn> element as a string in the dictionary using the label as the key
+        fn_list.append(fn_element)
+    
+    output = []
+    
+    for fn in fn_list:
+        output.append(fn.split('</fn>', 1)[0] + '</fn>')
+
+    return output
+
+def restructure_JHOK_footnotes(xml):
+    fn_list = extract_fn(xml)
+    
+    with open(xml, 'r', encoding='utf-8') as file:
+        text = file.read()
+        
+    text = text.replace('<sup>', '')
+    text = text.replace('</sup>', '')
+        
+    text = text.replace('</back>', '')
+    text = text.replace('</article>', '')
+        
+    fn_group = '<fn-group>\n'    
+    
+    for fn in fn_list:
+        text = text.replace(fn, '')
+        fn_group += fn
+        fn_group += '\n'
+    
+    fn_group += '</fn-group>'
+    
+    text += fn_group
+    
+    text += '</back>'
+    text += '</article>'
+    
+    return text
 
 
 # In[15]:

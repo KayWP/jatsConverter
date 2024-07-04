@@ -121,10 +121,16 @@
     <strong><xsl:apply-templates/></strong>
   </xsl:template>
 
-  <!-- Transform footnote references -->
+<!-- Transform footnote references -->
   <xsl:template match="sup[xref[@ref-type='fn']]">
     <sup>[fn:<xsl:value-of select="xref/@rid"/>]</sup>
   </xsl:template>
+  
+<!-- Transform footnote references -->
+<xsl:template match="xref[@ref-type='fn']">
+  [fn:<xsl:value-of select="@rid"/>]
+</xsl:template>
+
 
   <xsl:template match="ext-link[@ext-link-type='doi']">
     <xsl:value-of select="."/>

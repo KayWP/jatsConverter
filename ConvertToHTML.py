@@ -82,6 +82,16 @@ def main():
     
     title = Converter.gen_title_html(input_file) #create a title from the XML
     
+    if reference_style == 'jhok':
+        print('preprocessing file')
+        Convertor.JHOK_preprocess(input_file)
+        input_file = 'output.xml'
+
+        markdown_file = Converter.add_footnotes_bottom_html(markdown_file, input_file)
+        markdown_file = Converter.add_fn(markdown_file, input_file)
+        markdown_file = Converter.add_references_bottom_html(markdown_file, input_file)
+        
+    
     if reference_style == 'a':
         if Converter.contains_ref_type(input_file, 'xref', 'bibr'):
             reference_style = 'ref'
@@ -116,6 +126,12 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
