@@ -83,14 +83,17 @@ def main():
     title = Converter.gen_title_html(input_file) #create a title from the XML
     
     if reference_style == 'a':
-        if Converter.contains_tag(input_file, 'xref', 'bibr'):
+        if Converter.contains_ref_type(input_file, 'xref', 'bibr'):
             reference_style = 'ref'
             print('detected ref')
             
-        elif Converter.contains_tag(input_file, 'xref', 'fn'):
+        elif Converter.contains_ref_type(input_file, 'xref', 'fn'):
             reference_style = 'fn'
             print('detected fn')
-        
+    
+    if Converter.contains_tag(input_file, 'ref-list'):
+        print('contains ref list')
+    
     if reference_style == 'fn':
         markdown_file = Converter.add_footnotes_bottom_html(markdown_file, input_file)
         markdown_file = Converter.add_fn(markdown_file, input_file)

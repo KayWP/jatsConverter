@@ -349,7 +349,7 @@ def extract_fn_contents(xml_file):
 
     return fn_dict
 
-def contains_tag(xml_file, tag, ref_type):
+def contains_ref_type(xml_file, tag, ref_type):
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -359,6 +359,14 @@ def contains_tag(xml_file, tag, ref_type):
             if elem.get('ref-type') == ref_type:
                 return True
         return False
+    except ET.ParseError:
+        return False
+
+def contains_tag(xml_file, tag):
+    try:
+        tree = ET.parse(xml_file)
+        root = tree.getroot()
+        return root.findall(f".//{tag}") != []
     except ET.ParseError:
         return False
 
