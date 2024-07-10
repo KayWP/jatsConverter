@@ -210,7 +210,8 @@ def convert_table_to_html(xml_element, table_id='tb001'):
     # Add thead rows to HTML output
     html_output += '    <tr>\n'
     for th in thead_rows[0].findall('th'):
-        html_output += f'      <th>{th.text.strip()}</th>\n'
+        th_text = th.text.strip() if th.text else ''
+        html_output += f'      <th>{th_text}</th>\n'
     html_output += '    </tr>\n'
 
     # Add tbody rows to HTML output
@@ -218,7 +219,8 @@ def convert_table_to_html(xml_element, table_id='tb001'):
     for tr in tbody_rows:
         html_output += '    <tr>\n'
         for td in tr.findall('td'):
-            html_output += f'      <td>{td.text.strip()}</td>\n'
+            td_text = td.text.strip() if td.text else ''
+            html_output += f'      <td>{td_text}</td>\n'
         html_output += '    </tr>\n'
 
     # Complete the HTML output
@@ -495,8 +497,8 @@ def add_references_bottom(txt, basexml):
 
 def add_references_bottom_html(txt, basexml):
     reference_list = extract_ref_contents(basexml)
-    for r in reference_list.keys():
-        print(r)
+    #for r in reference_list.keys():
+        #print(r)
     #print('found references:')
     
     txt += '<br>'
@@ -512,6 +514,7 @@ def add_references_bottom_html(txt, basexml):
         
         txt += '<br>'
         txt += ref_formula
+        txt += '<br>'
         
     return txt
 

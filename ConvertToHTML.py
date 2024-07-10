@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
+# In[1]:
 
 
 import re
@@ -18,6 +18,11 @@ import Converter
 def construct_html_file(html_open, html_close, converted_article_text, xml):
     
     title = Converter.find_article_metadata_bmgn(xml)[0]
+    
+    if not title:
+        title = 'default_title'
+    else:
+        title = re.sub(r'[\/:*?"<>|]', '', title)  # Remove invalid characters
     
     file_name = title + '.html'
     
@@ -111,55 +116,17 @@ def main():
         markdown_file = Converter.add_fn(markdown_file, input_file)
         
     elif reference_style == 'ref':       
-        #replace tables here
         markdown_file = Converter.add_references_bottom_html(markdown_file, input_file)
         markdown_file = Converter.add_ref(markdown_file)
         
-    final_product = title + '\n' + markdown_file #merge the generated title with the process front-free file
-    
-    #with open('html.txt', 'w', encoding='utf-8') as final_file:
-    #    final_file.write(final_product)
+    final_product = title + '\n' + markdown_file #merge the generated title with the processed front-free file
     
     construct_html_file('html_open.html', 'html_close.html', final_product, input_file)
-
-
-# In[3]:
-
-
-if __name__ == '__main__':
-    main()
-
-
-# In[8]:
-
-
-def extract_ref_contents(xml_file):
-    # Initialize an empty dictionary to store the extracted content
-    ref_dict = {}
-
-    # Parse the XML file
-    tree = ET.parse(xml_file)
-    root = tree.getroot()
-
-    # Find all <ref> elements within the <ref-list>
-    for ref in root.findall('.//ref-list/ref'):
-        ref_id = ref.get('id')  # Get the ref id
-        ref_content = Converter.get_text_recursively(ref.find('mixed-citation'))  # Get the ref content
-        
-        # Store the content in the dictionary using the ref id as the key
-        ref_dict[ref_id] = ref_content
-
-    return ref_dict
-
-
-# In[9]:
-
-
-extract_ref_contents('output.xml')
 
 
 # In[ ]:
 
 
-
+if __name__ == '__main__':
+    main()
 
