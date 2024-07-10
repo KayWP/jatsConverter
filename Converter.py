@@ -434,6 +434,7 @@ def add_fn(txt, basexml):
 
 def compose_ref_dict(text):
     # Define the regex pattern
+    # it is supposed to match the output of the XSLT conversion, which looks like  [bibr:r13: Pieper & Broschinski, 2018] 
     pattern = re.compile(r'\[(r\d+):([^\]]+)\]')
     
     # Find all matches in the text
@@ -502,7 +503,7 @@ def add_references_bottom_html(txt, basexml):
     #print('found references:')
     
     txt += '<br>'
-    txt += '<h3>Footnotes</h3>'
+    txt += '<h3>References</h3>'
 
     for ref in reference_list.keys():
         ref_no = ref
@@ -514,6 +515,7 @@ def add_references_bottom_html(txt, basexml):
         
         txt += '<br>'
         txt += ref_formula
+        txt += '<br>'
         txt += '<br>'
         
     return txt
