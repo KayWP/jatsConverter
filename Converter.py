@@ -352,7 +352,13 @@ def extract_fn_contents(xml_file):
     # Find all <fn> elements within the <fn-group>
     for fn in root.findall('.//fn-group/fn'):
         fn_id = fn.get('id')  # Get the fn id
-        fn_label = fn.find('label').text  # Get the fn label
+        
+        label_element = fn.find('label')
+        if label_element is not None:
+            fn_label = label_element.text  # Get the fn label
+        else:
+            fn_label = fn_id.strip('fn')  # Provide a default or handle appropriately
+        
         fn_content = get_text_recursively(fn.find('p'))  # Get the fn content
         
         # Store the content in the dictionary using the label as the key
