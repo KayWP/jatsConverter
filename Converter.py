@@ -192,12 +192,9 @@ def add_tables(txt, basexml):
 import xml.etree.ElementTree as ET
 
 def convert_table_to_html(xml_element, table_id='tb001'):
-    # Assuming xml_element is already an ElementTree.Element object
-    
     # Extract table elements
     label = xml_element.find('label').text.strip()
     caption = xml_element.find('.//caption').find('p').text.strip()
-    thead_rows = xml_element.find('.//thead').findall('tr')
     tbody_rows = xml_element.find('.//tbody').findall('tr')
 
     # Start constructing HTML output
@@ -207,12 +204,16 @@ def convert_table_to_html(xml_element, table_id='tb001'):
       <thead>
     '''
 
-    # Add thead rows to HTML output
-    html_output += '    <tr>\n'
-    for th in thead_rows[0].findall('th'):
-        th_text = th.text.strip() if th.text else ''
-        html_output += f'      <th>{th_text}</th>\n'
-    html_output += '    </tr>\n'
+    # Check if there's a <thead> element
+    thead = xml_element.find('.//thead')
+    if thead is not None:
+        thead_rows = thead.findall('tr')
+        # Add thead rows to HTML output
+        html_output += '    <tr>\n'
+        for th in thead_rows[0].findall('th'):
+            th_text = th.text.strip() if th.text else ''
+            html_output += f'      <th>{th_text}</th>\n'
+        html_output += '    </tr>\n'
 
     # Add tbody rows to HTML output
     html_output += '  </thead>\n  <tbody>\n'
@@ -230,6 +231,7 @@ def convert_table_to_html(xml_element, table_id='tb001'):
     '''
 
     return html_output
+
 
 
 # In[9]:
