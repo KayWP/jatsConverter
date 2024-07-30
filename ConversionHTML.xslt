@@ -121,6 +121,11 @@
     <strong><xsl:apply-templates/></strong>
   </xsl:template>
 
+<!-- Transform bibliographic references -->
+<xsl:template match="xref[@ref-type='bibr']">
+  [<xsl:value-of select="@rid"/>: <xsl:value-of select="."/>]
+</xsl:template>
+
 <!-- Transform footnote references -->
   <xsl:template match="sup[xref[@ref-type='fn']]">
     <sup>[fn:<xsl:value-of select="xref/@rid"/>]</sup>

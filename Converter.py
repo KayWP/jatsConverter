@@ -192,12 +192,9 @@ def add_tables(txt, basexml):
 import xml.etree.ElementTree as ET
 
 def convert_table_to_html(xml_element, table_id='tb001'):
-    # Assuming xml_element is already an ElementTree.Element object
-    
     # Extract table elements
     label = xml_element.find('label').text.strip()
     caption = xml_element.find('.//caption').find('p').text.strip()
-    thead_rows = xml_element.find('.//thead').findall('tr')
     tbody_rows = xml_element.find('.//tbody').findall('tr')
 
     # Start constructing HTML output
@@ -207,18 +204,24 @@ def convert_table_to_html(xml_element, table_id='tb001'):
       <thead>
     '''
 
-    # Add thead rows to HTML output
-    html_output += '    <tr>\n'
-    for th in thead_rows[0].findall('th'):
-        html_output += f'      <th>{th.text.strip()}</th>\n'
-    html_output += '    </tr>\n'
+    # Check if there's a <thead> element
+    thead = xml_element.find('.//thead')
+    if thead is not None:
+        thead_rows = thead.findall('tr')
+        # Add thead rows to HTML output
+        html_output += '    <tr>\n'
+        for th in thead_rows[0].findall('th'):
+            th_text = th.text.strip() if th.text else ''
+            html_output += f'      <th>{th_text}</th>\n'
+        html_output += '    </tr>\n'
 
     # Add tbody rows to HTML output
     html_output += '  </thead>\n  <tbody>\n'
     for tr in tbody_rows:
         html_output += '    <tr>\n'
         for td in tr.findall('td'):
-            html_output += f'      <td>{td.text.strip()}</td>\n'
+            td_text = td.text.strip() if td.text else ''
+            html_output += f'      <td>{td_text}</td>\n'
         html_output += '    </tr>\n'
 
     # Complete the HTML output
@@ -228,6 +231,7 @@ def convert_table_to_html(xml_element, table_id='tb001'):
     '''
 
     return html_output
+
 
 
 # In[9]:
@@ -350,7 +354,13 @@ def extract_fn_contents(xml_file):
     # Find all <fn> elements within the <fn-group>
     for fn in root.findall('.//fn-group/fn'):
         fn_id = fn.get('id')  # Get the fn id
-        fn_label = fn.find('label').text  # Get the fn label
+        
+        label_element = fn.find('label')
+        if label_element is not None:
+            fn_label = label_element.text  # Get the fn label
+        else:
+            fn_label = fn_id.strip('fn')  # Provide a default or handle appropriately
+        
         fn_content = get_text_recursively(fn.find('p'))  # Get the fn content
         
         # Store the content in the dictionary using the label as the key
@@ -432,6 +442,7 @@ def add_fn(txt, basexml):
 
 def compose_ref_dict(text):
     # Define the regex pattern
+    # it is supposed to match the output of the XSLT conversion, which looks like  [bibr:r13: Pieper & Broschinski, 2018] 
     pattern = re.compile(r'\[(r\d+):([^\]]+)\]')
     
     # Find all matches in the text
@@ -495,12 +506,12 @@ def add_references_bottom(txt, basexml):
 
 def add_references_bottom_html(txt, basexml):
     reference_list = extract_ref_contents(basexml)
-    for r in reference_list.keys():
-        print(r)
+    #for r in reference_list.keys():
+        #print(r)
     #print('found references:')
     
     txt += '<br>'
-    txt += '<h3>Footnotes</h3>'
+    txt += '<h3>References</h3>'
 
     for ref in reference_list.keys():
         ref_no = ref
@@ -512,6 +523,8 @@ def add_references_bottom_html(txt, basexml):
         
         txt += '<br>'
         txt += ref_formula
+        txt += '<br>'
+        txt += '<br>'
         
     return txt
 
